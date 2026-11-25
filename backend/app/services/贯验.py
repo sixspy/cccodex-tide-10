@@ -2,6 +2,7 @@
 from __future__ import annotations
 from app.db import 连接
 from app.seed import 此刻
+from app.modules import 日界切开关窗 as 日界
 
 
 def 跑一次() -> dict:
@@ -20,6 +21,15 @@ def 跑一次() -> dict:
         # 基线口径：已物化缓冲事件数应等于切片事件数之和
         对齐 = 1 if int(已物化缓冲) == int(切片事件) else 0
         说明 = "缓冲物化与切片事件数一致" if 对齐 else f"撕裂：已物化缓冲={已物化缓冲} 切片事件={切片事件}"
+        日界检查: list[str] = []
+        规 = {r["键"]: r["值"] for r in conn.execute("SELECT 键,值 FROM 窗规").fetchall()}
+        if 日界.启用(规):
+            日界检查 = 日界.extra_verify_checks(conn)
+            if 日界检查:
+                对齐 = 0
+                说明 += "；" + "；".join(日界检查)
+            else:
+                说明 += "；日界检查通过"
         时刻 = 此刻()
         conn.execute(
             """INSERT INTO 窗贯验(时刻,缓冲笔数,切片笔数,迟到笔数,是否对齐,说明)
@@ -35,6 +45,7 @@ def 跑一次() -> dict:
             "迟到": 迟到,
             "是否对齐": bool(对齐),
             "说明": 说明,
+            "日界检查": 日界检查,
         }
     finally:
         conn.close()

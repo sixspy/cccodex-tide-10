@@ -72,6 +72,28 @@ CREATE TABLE IF NOT EXISTS 关窗批次 (
   成片数 INTEGER NOT NULL DEFAULT 0,
   报告 TEXT NOT NULL DEFAULT '{}'
 );
+CREATE TABLE IF NOT EXISTS 日界封账 (
+  日封键 TEXT PRIMARY KEY,
+  旧窗号 TEXT NOT NULL,
+  新窗号 TEXT NOT NULL,
+  旧窗起 TEXT NOT NULL,
+  旧窗止 TEXT NOT NULL,
+  新窗起 TEXT NOT NULL,
+  新窗止 TEXT NOT NULL,
+  形态 TEXT NOT NULL DEFAULT '切流',
+  封时 TEXT NOT NULL,
+  有效 INTEGER NOT NULL DEFAULT 1
+);
+CREATE TABLE IF NOT EXISTS 跨日归档 (
+  编号 INTEGER PRIMARY KEY AUTOINCREMENT,
+  事件编号 TEXT NOT NULL,
+  运单键 TEXT NOT NULL,
+  网点键 TEXT NOT NULL,
+  事件时 TEXT NOT NULL,
+  原窗号 TEXT NOT NULL DEFAULT '',
+  日封键 TEXT NOT NULL DEFAULT '',
+  归档时 TEXT NOT NULL
+);
 """
 
 
@@ -90,6 +112,7 @@ def 初始化库() -> None:
             "当前窗号": "W-demo",
             "窗起": "2026-11-24T00:00:00Z",
             "窗止": "2026-11-24T01:00:00Z",
+            "日界形态": "切流",
         }.items():
             conn.execute("INSERT INTO 窗规(键,值) VALUES (?,?)", (k, v))
     if conn.execute("SELECT COUNT(*) AS c FROM 网点源").fetchone()["c"] == 0:

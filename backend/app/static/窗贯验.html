@@ -43,11 +43,36 @@
       </header>
 
       <section class="卷">
+        <h2>日界卡片</h2>
+        <div class="工具" id="日界卡"></div>
+        <p class="说明" id="日界查">跨日片 / 日封后昨窗增行 / 归档引用的检查随每次贯验刷新。</p>
+      </section>
+      <section class="卷">
         <div class="工具"><button class="按钮" id="跑">跑窗贯验</button> <span id="果"></span></div>
         <div class="表绕"><table><thead><tr><th>时刻</th><th>缓冲笔数</th><th>切片笔数</th><th>迟到笔数</th><th>是否对齐</th><th>说明</th></tr></thead><tbody id="表"></tbody></table></div>
       </section>
       <section class="卷"><p class="说明">贯验只认事件数互证，不认墙钟快慢。</p></section>
       <script>
+      async function 刷日界卡(日界检查) {
+        const s = await 潮切.getJSON("/api/日界");
+        const 封 = s.最近;
+        const 卡 = document.getElementById("日界卡");
+        卡.innerHTML = "";
+        const 项 = 封
+          ? [["日封键", 封.日封键], ["旧窗→新窗", `${封.旧窗号} → ${封.新窗号}`], ["valid", 封.valid ? "true" : "false"], ["封后增行", 封.封后增行]]
+          : [["日封键", "—"], ["旧窗→新窗", "尚无日封"], ["valid", "—"], ["封后增行", "—"]];
+        for (const [标, 值] of 项) {
+          const d = document.createElement("div");
+          d.className = "水卡";
+          d.innerHTML = `<div class="数">${潮切.安全文本(值)}</div><div class="标">${潮切.安全文本(标)}</div>`;
+          卡.appendChild(d);
+        }
+        if (日界检查) {
+          document.getElementById("日界查").innerHTML = 日界检查.length
+            ? "日界检查：" + 日界检查.map((e) => 潮切.徽章(e, "危")).join(" ")
+            : "日界检查：" + 潮切.徽章("通过", "好");
+        }
+      }
       async function 刷() {
         const rows = await 潮切.getJSON("/api/窗贯验");
         const tb = document.getElementById("表"); tb.innerHTML = "";
@@ -60,8 +85,9 @@
         const d = await 潮切.postJSON("/api/窗贯验/跑");
         document.getElementById("果").innerHTML = d.是否对齐 ? 潮切.徽章("对齐","好") : 潮切.徽章("撕裂","危");
         await 刷();
+        await 刷日界卡(d.日界检查 || []);
       };
-      刷();
+      刷(); 刷日界卡(null);
       </script>
 
     </main>

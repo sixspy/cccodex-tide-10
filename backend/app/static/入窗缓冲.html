@@ -43,16 +43,30 @@
       </header>
 
       <section class="卷">
-        <div class="表绕"><table><thead><tr><th>事件编号</th><th>运单键</th><th>窗号</th><th>事件时</th><th>命运</th></tr></thead><tbody id="表"></tbody></table></div>
+        <h2>日界详情</h2>
+        <p class="说明" id="日界">加载中…</p>
       </section>
-      <section class="卷"><div class="双栏"><p class="说明">缓冲是关窗前的在途。关窗后命运应变为已物化，条数应下降。</p><div class="侧注">版式：左侧窗时间轴。对拍是顶栏双轨，肉眼应能分开。</div></div></section>
+      <section class="卷">
+        <div class="表绕"><table><thead><tr><th>事件编号</th><th>运单键</th><th>窗号</th><th>事件时</th><th>命运</th><th>日界</th></tr></thead><tbody id="表"></tbody></table></div>
+      </section>
+      <section class="卷"><div class="双栏"><p class="说明">缓冲是关窗前的在途。关窗后命运应变为已物化，条数应下降。日封之后昨日窗不得再增行；一旦出现「封后增行」即为跨日脏片前兆。</p><div class="侧注">版式：左侧窗时间轴。对拍是顶栏双轨，肉眼应能分开。</div></div></section>
       <script>
       (async () => {
-        const rows = await 潮切.getJSON("/api/入窗缓冲");
+        const [rows, 日界] = await Promise.all([潮切.getJSON("/api/入窗缓冲"), 潮切.getJSON("/api/日界")]);
+        const 封 = 日界.最近;
+        document.getElementById("日界").textContent = 封
+          ? `形态 ${日界.形态 || "未启用"} · 最近日封 ${封.日封键}：旧窗号 ${封.旧窗号} → 新窗号 ${封.新窗号} · valid ${封.valid} · 封后增行 ${封.封后增行}`
+          : `形态 ${日界.形态 || "未启用"} · 尚无日封，当前窗 ${日界.当前窗号 || "—"}`;
+        const 行日界 = (r) => {
+          if (!封) return "—";
+          if (r.窗号 === 封.旧窗号) return r.入缓冲时 > 封.封时 ? 潮切.徽章("封后增行", "危") : 潮切.徽章("已封窗", "警");
+          if (r.窗号 === 封.新窗号) return 潮切.徽章("当日窗", "好");
+          return "—";
+        };
         const tb = document.getElementById("表");
-        if (!rows.length) { tb.innerHTML = `<tr><td colspan="5">${潮切.空态("缓冲为空。要么尚未装载，要么已经关窗物化。")}</td></tr>`; return; }
+        if (!rows.length) { tb.innerHTML = `<tr><td colspan="6">${潮切.空态("缓冲为空。要么尚未装载，要么已经关窗物化。")}</td></tr>`; return; }
         for (const r of rows) {
-          tb.appendChild(潮切.行(`<td>${潮切.安全文本(r.事件编号)}</td><td>${潮切.安全文本(r.运单键)}</td><td>${潮切.安全文本(r.窗号)}</td><td>${潮切.安全文本(r.事件时)}</td><td>${潮切.徽章(r.命运)}</td>`));
+          tb.appendChild(潮切.行(`<td>${潮切.安全文本(r.事件编号)}</td><td>${潮切.安全文本(r.运单键)}</td><td>${潮切.安全文本(r.窗号)}</td><td>${潮切.安全文本(r.事件时)}</td><td>${潮切.徽章(r.命运)}</td><td>${行日界(r)}</td>`));
         }
       })();
       </script>

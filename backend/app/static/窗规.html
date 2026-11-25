@@ -47,6 +47,16 @@
         <pre class="回执" id="规">加载中…</pre>
       </section>
       <section class="卷">
+        <h2>日界切开关窗 · 策略</h2>
+        <p class="说明">跨日到达按选定形态切窗封印：切流=昨日空或非空均钉日封、跨日点拒进昨窗；双写=跨日点进只读归档、现行只读当日窗。切窗封昨日与开今日同票成败。</p>
+        <div class="工具">
+          当前形态：<span id="形态">加载中…</span>
+          <button class="按钮" id="用切流">切流</button>
+          <button class="按钮" id="用双写">双写</button>
+        </div>
+        <pre class="回执" id="日界">加载中…</pre>
+      </section>
+      <section class="卷">
         <h2>空桩目录</h2>
         <p class="说明" id="空桩"></p>
         <div class="双栏">
@@ -55,10 +65,26 @@
         </div>
       </section>
       <script>
+      async function 刷日界() {
+        const s = await 潮切.getJSON("/api/日界");
+        document.getElementById("形态").innerHTML = s.启用 ? 潮切.徽章(s.形态, "好") : 潮切.徽章("未启用", "警");
+        const 封 = s.最近;
+        document.getElementById("日界").textContent = 封
+          ? `旧窗号 ${封.旧窗号} → 新窗号 ${封.新窗号} · 日封键 ${封.日封键} · valid ${封.valid} · 封后增行 ${封.封后增行}`
+          : "尚无日封。跨日到达触发切窗后，此处显示旧窗号/新窗号/日封键/valid。";
+      }
+      async function 设形态(形态) {
+        await 潮切.postJSON("/api/窗规", { "日界形态": 形态 });
+        document.getElementById("规").textContent = JSON.stringify(await 潮切.getJSON("/api/窗规"), null, 2);
+        await 刷日界();
+      }
+      document.getElementById("用切流").onclick = () => 设形态("切流");
+      document.getElementById("用双写").onclick = () => 设形态("双写");
       (async () => {
         document.getElementById("规").textContent = JSON.stringify(await 潮切.getJSON("/api/窗规"), null, 2);
         const s = await 潮切.getJSON("/api/空桩");
         document.getElementById("空桩").textContent = "空桩 " + s.条数 + "：" + (s.空桩 || []).join(" · ");
+        await 刷日界();
       })();
       </script>
 

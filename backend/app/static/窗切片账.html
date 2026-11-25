@@ -43,8 +43,8 @@
       </header>
 
       <section class="卷">
-        <div class="工具"><button class="按钮 青" id="关">关当前窗</button></div>
-        <div class="表绕"><table><thead><tr><th>切片编号</th><th>窗号</th><th>运单键</th><th>事件数</th><th>物化时</th></tr></thead><tbody id="表"></tbody></table></div>
+        <div class="工具"><button class="按钮 青" id="关">关当前窗</button><span id="日界" class="说明"></span></div>
+        <div class="表绕"><table><thead><tr><th>切片编号</th><th>窗号</th><th>运单键</th><th>事件数</th><th>窗起</th><th>窗止</th><th>日界</th><th>物化时</th></tr></thead><tbody id="表"></tbody></table></div>
       </section>
       <section class="卷">
         <div class="双栏">
@@ -53,16 +53,30 @@
         </div>
       </section>
       <script>
+      function 日界徽章(r) {
+        const 起 = new Date(r.窗起), 止 = new Date(r.窗止);
+        if (isNaN(起) || isNaN(止)) return "—";
+        const 止前一秒 = new Date(止.getTime() - 1000);
+        return 起.toISOString().slice(0, 10) === 止前一秒.toISOString().slice(0, 10)
+          ? 潮切.徽章("日内", "好") : 潮切.徽章("跨日片", "危");
+      }
       async function 刷() {
         const rows = await 潮切.getJSON("/api/窗切片账");
         const tb = document.getElementById("表"); tb.innerHTML = "";
-        if (!rows.length) { tb.innerHTML = `<tr><td colspan="5">${潮切.空态("尚无切片。装载窗内事件后点关当前窗。")}</td></tr>`; return; }
+        if (!rows.length) { tb.innerHTML = `<tr><td colspan="8">${潮切.空态("尚无切片。装载窗内事件后点关当前窗。")}</td></tr>`; return; }
         for (const r of rows) {
-          tb.appendChild(潮切.行(`<td>${潮切.安全文本(r.切片编号)}</td><td>${潮切.安全文本(r.窗号)}</td><td>${潮切.安全文本(r.运单键)}</td><td>${r.事件数}</td><td>${潮切.安全文本(r.物化时)}</td>`));
+          tb.appendChild(潮切.行(`<td>${潮切.安全文本(r.切片编号)}</td><td>${潮切.安全文本(r.窗号)}</td><td>${潮切.安全文本(r.运单键)}</td><td>${r.事件数}</td><td>${潮切.安全文本(r.窗起)}</td><td>${潮切.安全文本(r.窗止)}</td><td>${日界徽章(r)}</td><td>${潮切.安全文本(r.物化时)}</td>`));
         }
       }
-      document.getElementById("关").onclick = async () => { await 潮切.postJSON("/api/关窗/跑"); await 刷(); };
-      刷();
+      async function 刷日界() {
+        const s = await 潮切.getJSON("/api/日界");
+        const 封 = s.最近;
+        document.getElementById("日界").textContent = 封
+          ? `最近日封 ${封.日封键}：${封.旧窗号} → ${封.新窗号} · valid ${封.valid}`
+          : "尚无日封";
+      }
+      document.getElementById("关").onclick = async () => { await 潮切.postJSON("/api/关窗/跑"); await 刷(); await 刷日界(); };
+      刷(); 刷日界();
       </script>
 
     </main>

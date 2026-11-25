@@ -46,6 +46,10 @@ async def api_贯验列表(request: Request):
     return JSONResponse(目录.贯验列表())
 
 
+async def api_日界(request: Request):
+    return JSONResponse(目录.日界状态())
+
+
 async def api_夹具(request: Request):
     return JSONResponse(夹具.列表())
 
@@ -100,6 +104,7 @@ async def api_空桩(request: Request):
     Route("/api/窗切片账", api_切片),
     Route("/api/迟到匣", api_迟到),
     Route("/api/窗贯验", api_贯验列表),
+    Route("/api/日界", api_日界),
     Route("/api/夹具", api_夹具),
     Route("/api/观测点/装载", api_装载, methods=["POST"]),
     Route("/api/观测点/夹具/{name}", api_夹具装载, methods=["POST"]),
